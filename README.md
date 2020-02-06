@@ -1,3 +1,15 @@
+参考https://github.com/itbdw/ip-database，添加更详细的查询函数lookup_ex，返回数据已格式化为以下结构：
+
+    {
+        'ip': 'xx.xx.xx.xx',
+        'country': '中国',
+        'province': '四川',
+        'city': '成都',
+        'county': '',
+        'isp': '电信',
+        'area': '中国四川成都电信'
+    }
+
 用于在qqwry.dat里查找IP地址归属地。  
 另提供一个从纯真网络更新qqwry.dat的小工具。
 
