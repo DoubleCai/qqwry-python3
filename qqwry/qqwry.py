@@ -73,6 +73,59 @@ def int4(data, offset):
            (data[offset+2] << 16) + (data[offset+3] << 24)
 
 class QQwry:
+    dict_isp = [
+        '联通',
+        '移动',
+        '铁通',
+        '电信',
+        '长城',
+        '聚友',
+    ]
+
+    dict_province = [
+        '北京',
+        '天津',
+        '重庆',
+        '上海',
+        '河北',
+        '山西',
+        '辽宁',
+        '吉林',
+        '黑龙江',
+        '江苏',
+        '浙江',
+        '安徽',
+        '福建',
+        '江西',
+        '山东',
+        '河南',
+        '湖北',
+        '湖南',
+        '广东',
+        '海南',
+        '四川',
+        '贵州',
+        '云南',
+        '陕西',
+        '甘肃',
+        '青海',
+        '台湾',
+        '内蒙古',
+        '广西',
+        '宁夏',
+        '新疆',
+        '西藏',
+        '香港',
+        '澳门',
+    ]
+
+    dict_city_directly = [
+        '北京',
+        '天津',
+        '重庆',
+        '上海',
+    ]
+
     def __init__(self):
         self.clear()
         
@@ -197,6 +250,117 @@ class QQwry:
             return self.__fun(ip)
         except:
             return None
+
+    def lookup_ex(self, ip_str):
+        info = self.lookup(ip_str)
+
+        if info is None:
+            return None
+
+        country = info[0]
+        area = info[1]
+
+        location = {
+            'org_country': country,
+            'org_area': area,
+            'country': country,
+            'area': area,
+            'province': '',
+            'city': '',
+            'county': '',
+        }
+
+        is_china        = False
+        seperator_sheng = '省'
+        seperator_shi   = '市'
+        seperator_xian  = '县'
+        seperator_qu    = '区'
+
+        tmp_province = country.split(seperator_sheng)
+        if len(tmp_province) == 2:
+            is_china = True
+
+            location['province'] = tmp_province[0]
+
+            if seperator_shi in tmp_province[1]:
+                tmp_city = tmp_province[1].split(seperator_shi)
+
+                location['city'] = tmp_city[0]
+
+                if len(tmp_city) >= 2:
+                    if seperator_xian in tmp_city[1]:
+                        tmp_county = tmp_city[1].split(seperator_xian)
+                        location['county'] = tmp_county + seperator_xian
+
+                    if len(location['county']) <= 0 and seperator_qu in tmp_city[1]:
+                        tmp_qu = tmp_city[1].split(seperator_qu)
+                        location['county'] = tmp_qu[0] + seperator_qu
+            else:
+                location['city'] = tmp_province[1]
+
+        else:
+            for province in QQwry.dict_province:
+                if country.startswith(province):
+                    is_china = True
+
+                    if province in QQwry.dict_city_directly:
+                        tmp_province = country.split(seperator_shi)
+
+                        if tmp_province[0] == province:
+                            location['province'] = tmp_province[0]
+
+                            if len(tmp_province) >= 2:
+                                if seperator_qu in tmp_province[1]:
+                                    tmp_qu = tmp_province[1].split(seperator_qu)
+                                    location['city'] = tmp_qu[0] + seperator_qu
+                                elif seperator_xian in tmp_province[1]:
+                                    tmp_xian = tmp_province[1].split(seperator_xian)
+                                    location['county'] = tmp_xian[0] + seperator_xian
+
+                        else:
+                            location['province'] = province
+                            location['org_area'] = location['org_country'] + location['org_area']
+                    else:
+                        location['province'] = province
+
+                        tmp_city = country.replace(province, '')
+                        if tmp_city.startswith(seperator_shi):
+                            tmp_city = tmp_city[1:]
+
+                        if seperator_shi in tmp_city:
+                            tmp_city = tmp_city.split(seperator_shi)
+
+                            location['city'] = tmp_city[0] + seperator_shi
+
+                            if len(tmp_city) >= 2:
+                                if seperator_xian in tmp_city[1]:
+                                    tmp_county = tmp_city[1].split(seperator_xian)
+                                    location['county'] = tmp_county + seperator_xian
+
+                                if len(location['county']) <= 0 and seperator_qu in tmp_city[1]:
+                                    tmp_qu = tmp_city[1].split(seperator_qu)
+                                    location['county'] = tmp_qu[0] + seperator_qu
+
+                    break
+
+        if is_china:
+            location['country'] = '中国'
+
+        location['isp'] = ''
+        for isp in QQwry.dict_isp:
+            if isp in location['area']:
+                location['isp'] = isp
+                break
+
+        return {
+            'ip': ip_str,
+            'country': location['country'],
+            'province': location['province'],
+            'city': location['city'],
+            'county': location['county'],
+            'isp': location['isp'],
+            'area': location['country'] + location['province'] + location['city'] + location['county'] + location['org_area'],
+        }
         
     def __raw_search(self, ip):
         l = 0
