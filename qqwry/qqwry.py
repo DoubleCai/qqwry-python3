@@ -290,7 +290,7 @@ class QQwry:
                 if len(tmp_city) >= 2:
                     if seperator_xian in tmp_city[1]:
                         tmp_county = tmp_city[1].split(seperator_xian)
-                        location['county'] = tmp_county + seperator_xian
+                        location['county'] = tmp_county[0] + seperator_xian
 
                     if len(location['county']) <= 0 and seperator_qu in tmp_city[1]:
                         tmp_qu = tmp_city[1].split(seperator_qu)
